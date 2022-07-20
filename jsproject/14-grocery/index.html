@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grocery</title>
+    <link rel="stylesheet" href="styles.css">
+    <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css"
+  />
+</head>
+<body>
+    <section class="section-center">
+        <form class="grocery-form">
+            <p class="alert"></p>
+            <h3>Bahan Baku Grosir</h3>
+            <div class="form-control">
+                <input type="text" id="grocery" placeholder="telur">
+                <button type="submit" class="submit-btn">submit</button>
+            </div>
+        </form>
+
+        <div class="grocery-container">
+            <div class="grocery-list">
+                <!-- <article class="grocery-item">
+                    <p class="title">Item</p>
+                    <div class= "btn-container">
+                    <button type="button" class="edit-btn">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button type="button" class="delete-btn">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                </article> -->
+            </div>
+            <button type="button" class="clear-btn">Clear Items</button>
+        </div>
+    </section>
+
+    <script>
+        // select items
+        const alert = document.querySelector('.alert');
+        const form = document.querySelector('.grocery-form');
+        const grocery = document.getElementById('grocery');
+        const submitBtn = document.querySelector('.submit-btn');
+        const container = document.querySelector('.grocery-container');
+        const list = document.querySelector('.grocery-list');
+        const clearBtn = document.querySelector('.clear-btn');
+
+        
+
+        // edit option
+        let editElement;
+        let editFLag = false;
+        let editId = '';
+
+        // load
+        window.addEventListener('DOMContentLoaded', setUpItems);
+
+        // event listener
+        form.addEventListener('submit',addItem);
+
+        // clear
+        clearBtn.addEventListener('click',clearItems); 
+
+        // =========== function =============
+        function addItem(e){
+            e.preventDefault();
+            const value = grocery.value;
+            const id = new Date().getTime().toString();
+
+            if (value && !editFLag ){
+                createListItem(id,value);
+
+                // console.log('add');
+                // const element = document.createElement('article');
+                // element.classList.add('grocery-item');
+
+                // const attr = document.createAttribute('data-id');
+                // attr.value = id;
+                
+                // menambahkan atribut id di element article
+                // element.setAttributeNode(attr);
+
+                // element.innerHTML = `<p class="title">${value}</p>
+                // <div class= "btn-container">
+                //     <button type="button" class="edit-btn">
+                //         <i class="fas fa-edit"></i>
+                //     </button>
+                //     <button type="button" class="delete-btn">
+                //         <i class="fas fa-trash"></i>
+                //     </button>
+                // </div>`;
+
+                // const editBtn = element.querySelector('.edit-btn');
+                // const deleteBtn = element.querySelector('.delete-btn');
+
+                // editBtn.addEventListener('click',editItem);
+                // deleteBtn.addEventListener('click',deleteItem);
+
+                // append child list
+                // list.appendChild(element);
+
+               
+                // display alert
+                displayAlert(`${value} telah ditambahkan`, 'success')
+
+                // show container
+                container.classList.add('show-container');
+
+                // add to local storage
+                addToLocalStorage(id,value);
+
+                // set to back default
+                setBackToDefault();
+
+            }else if(value && editFLag){
+                // mengambil variabel dari atas yang sudah di set dari function editItem
+                // editElement = previous sibling dari btn yaitu p
+                // diubah p dilist menjadi value
+                editElement.innerHTML = value;
+                displayAlert('edit berhasil', 'success');
+
+                // edit localStorage
+                editFromLocalStorage(editId, value);
+
+                setBackToDefault();
+            }else{
+                // console.log('kosong')
+                // alert.textContent = "Kosong Pak..";
+                // alert.classList.add('alert-danger');
+
+                displayAlert('Kosong Pak..','danger');
+            }
+        }
+
+        // display Alert
+        function displayAlert(text,action){
+            alert.textContent = text;
+            alert.classList.add(`alert-${action}`);
+
+            setInterval(function(){
+                alert.textContent = '';
+                alert.classList.remove(`alert-${action}`);
+            }, 1000);
+        }
+
+        // clear items
+        function clearItems(){
+            const items = document.querySelectorAll('.grocery-item');
+
+            if (items.length>0){
+                items.forEach(function(item){
+                    list.removeChild(item);
+                });
+                container.classList.remove('show-container');
+                displayAlert("Kosong..","danger");
+                setBackToDefault();
+                localStorage.removeItem('list');
+            }
+        }
+
+        // delete item
+        function deleteItem(e){
+            // console.log('delete');
+            // mengambil parent grocery-item
+            const element = e.currentTarget.parentElement.parentElement;
+            // console.log(element);
+            list.removeChild(element);
+            if(list.children.length === 0){
+                container.classList.remove('show-container');
+            }
+
+            displayAlert('Item dihapus','danger');
+            setBackToDefault();
+
+            const id = element.dataset.id;
+            // hapus dari localstorage
+            removeFromLocalStorage(id);
+
+        }
+
+
+        // edit item
+        function editItem(e){
+            // ambil element sama seperti delete
+            const element = e.currentTarget.parentElement.parentElement;
+            // console.log('edit');
+            editElement = e.currentTarget.parentElement.previousElementSibling;
+            // console.log(editElement);
+
+            // menampilkan text yang diedit diform
+            grocery.value = editElement.innerHTML;
+            editFLag = true;
+            editId = element.dataset.id;
+            submitBtn.textContent = 'edit';
+            // console.log(editId);
+        }
+
+        // set back to default
+        function setBackToDefault(){
+            grocery.value = '';
+            editFLag = false;
+            editId = '';
+            submitBtn.textContent = 'submit';
+        }
+
+        // ====== local storage =====
+
+        // get localStorage
+        function getLocalStorage(){
+           return localStorage.getItem('list')? JSON.parse(localStorage.getItem('list')):[];
+        }
+
+        // add
+        function addToLocalStorage(id,value){
+            // defaultnya 
+            // const grocery = {id:id, value:value};
+            // versi shorthand
+            const grocery = {id, value};
+
+            // cek 
+            // let items = localStorage.getItem('list')? JSON.parse(localStorage.getItem('list')):[];
+            let items = getLocalStorage();
+            
+            items.push(grocery);
+            localStorage.setItem('list',JSON.stringify(items));
+
+            // console.log(JSON.parse(localStorage.getItem('list')));
+        }
+
+        // edit
+        function editFromLocalStorage(id,value){
+            let items = getLocalStorage();
+
+            items = items.map(function(item){
+                if(item.id === id){
+                    item.value = value;
+                }
+                return item;
+            });
+
+            localStorage.setItem('list',JSON.stringify(items));
+
+
+        }
+
+        // remove
+        function removeFromLocalStorage(id){
+            let items = getLocalStorage();
+
+            items = items.filter(function(item){
+                if(item.id !== id){
+                    return item;
+                }
+            });
+
+            localStorage.setItem('list',JSON.stringify(items));
+            
+        }
+
+
+        // localStorage API
+        // setItem
+        // getItem
+        // removeItem
+        // save as string
+        // localStorage.setItem('jeruks',JSON.stringify(['jeruk1','jeruk2']));
+        // localStorage.setItem('jeruks2',JSON.stringify(['jeruk1','jeruk2']));
+        // const jeruks = JSON.parse(localStorage.getItem('jeruks'));
+        // const jeruks2 = localStorage.getItem('jeruks2');
+        // console.log(JSON.parse(jeruks2));
+        // console.log(jeruks2);
+        // localStorage.removeItem('jeruks');
+
+
+        // ===========setup items=========
+        function setUpItems(){
+            let items = getLocalStorage();
+
+            if (items.length > 0){
+                items.forEach(function(item){
+                    createListItem(item.id, item.value);
+                });
+
+                container.classList.add('show-container');
+            }
+        }
+
+        function createListItem(id,value){
+            const element = document.createElement('article');
+            element.classList.add('grocery-item');
+
+            const attr = document.createAttribute('data-id');
+            attr.value = id;
+            
+            // menambahkan atribut id di element article
+            element.setAttributeNode(attr);
+
+            element.innerHTML = `<p class="title">${value}</p>
+            <div class= "btn-container">
+                <button type="button" class="edit-btn">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button type="button" class="delete-btn">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>`;
+
+            const editBtn = element.querySelector('.edit-btn');
+            const deleteBtn = element.querySelector('.delete-btn');
+
+            editBtn.addEventListener('click',editItem);
+            deleteBtn.addEventListener('click',deleteItem);
+
+            // append child list
+            list.appendChild(element);
+        }
+    </script>
+</body>
+</html>
