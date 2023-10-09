@@ -1,3 +1,3 @@
 # belajarjs
 
-Pembelajaran Javascript
+Pembelajaran Bahasa Pemrograman Javascript
