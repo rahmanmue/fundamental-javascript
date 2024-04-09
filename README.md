@@ -1,3 +1,3 @@
 # belajar
 
-Pembelajaran Bahasa Pemrograman + Projek 
+Pembelajaran Bahasa Pemrograman Javascript
